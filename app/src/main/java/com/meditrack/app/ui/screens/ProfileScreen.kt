@@ -138,13 +138,40 @@ fun ProfileScreen(viewModel: SettingsViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Expiry warning threshold
+        val expiryWarningDays by viewModel.expiryWarningDays.collectAsState()
+        MediCard {
+            Text("Expiry Warning Threshold", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = OnWhite)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "Alert me $expiryWarningDays days before a medicine expires",
+                fontSize = 13.sp,
+                color = MediumGray
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf(7, 14, 30, 60).forEach { days ->
+                    FilterChip(
+                        selected = expiryWarningDays == days,
+                        onClick = { viewModel.setExpiryWarningDays(days) },
+                        label = { Text("${days}d") }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // About section
         MediCard {
-            Text("About MediTrack", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = OnWhite)
+            Text("About MedCycle", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = OnWhite)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "MediTrack helps you track your medicines, set reminders, and monitor your adherence. " +
-                       "All data is stored locally on your device.",
+                text = "MedCycle helps you track your household medicine inventory, monitor expiry dates, " +
+                       "and find safe disposal guidance. All data is stored locally on your device.",
                 fontSize = 14.sp,
                 color = MediumGray
             )
@@ -152,7 +179,7 @@ fun ProfileScreen(viewModel: SettingsViewModel) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.Info, contentDescription = null, tint = MediumGray, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Version 1.0", fontSize = 13.sp, color = MediumGray)
+                Text("Version 2.0", fontSize = 13.sp, color = MediumGray)
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -163,8 +190,7 @@ fun ProfileScreen(viewModel: SettingsViewModel) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "MediTrack does not provide medical advice or medication recommendations. " +
-                       "Always consult your healthcare provider.",
+                text = "MedCycle does not provide medical advice. Always consult your healthcare provider.",
                 fontSize = 12.sp,
                 color = MediumGray
             )

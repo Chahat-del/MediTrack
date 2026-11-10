@@ -27,6 +27,9 @@ class SettingsViewModel(
     val notificationsEnabled: StateFlow<Boolean> =
         repository.notificationsEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
+    val expiryWarningDays: StateFlow<Int> =
+        repository.expiryWarningDays.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 30)
+
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
@@ -41,17 +44,22 @@ class SettingsViewModel(
         viewModelScope.launch {
             repository.setNotificationsEnabled(enabled)
             if (enabled) {
-                // Re-schedule all reminders
                 val medicines = repository.getAllMedicinesList()
                 ReminderScheduler.restoreAllReminders(context, medicines)
                 _message.value = "Notifications enabled"
             } else {
-                // Cancel all reminders
                 for (med in repository.getAllMedicinesList()) {
                     ReminderScheduler.cancelMedicineReminders(context, med)
                 }
                 _message.value = "Notifications disabled"
             }
+        }
+    }
+
+    fun setExpiryWarningDays(days: Int) {
+        viewModelScope.launch {
+            repository.setExpiryWarningDays(days)
+            _message.value = "Expiry warning updated to $days days"
         }
     }
 

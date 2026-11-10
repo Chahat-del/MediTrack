@@ -77,6 +77,9 @@ dependencies {
     // DataStore for settings
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
+    // WorkManager for periodic background jobs (expiry checks)
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 

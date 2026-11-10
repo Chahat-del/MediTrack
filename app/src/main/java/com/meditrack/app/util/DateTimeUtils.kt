@@ -79,4 +79,33 @@ object DateTimeUtils {
             false
         }
     }
+
+    /**
+     * Returns the number of days from [fromIso] to [toIso].
+     * Negative = [toIso] is in the past relative to [fromIso].
+     */
+    fun daysBetween(fromIso: String, toIso: String): Int {
+        return try {
+            val from = parseDate(fromIso).time
+            val to = parseDate(toIso).time
+            ((to - from) / (1000L * 60 * 60 * 24)).toInt()
+        } catch (e: Exception) {
+            Int.MAX_VALUE
+        }
+    }
+
+    /**
+     * Returns the number of days until [expiryIso] from today.
+     * Negative means already expired.
+     */
+    fun daysUntilExpiry(expiryIso: String): Int = daysBetween(todayIso(), expiryIso)
+
+    /**
+     * Returns the ISO date N days from today.
+     */
+    fun getNDaysFromNow(n: Int): String {
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.DAY_OF_YEAR, n)
+        return dateFmt.format(cal.time)
+    }
 }

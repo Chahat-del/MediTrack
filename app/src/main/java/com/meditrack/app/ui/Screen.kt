@@ -5,9 +5,10 @@ package com.meditrack.app.ui
  */
 sealed class Screen(val route: String, val label: String) {
     data object Home : Screen("home", "Home")
-    data object Medicines : Screen("medicines", "Medicines")
+    data object Inventory : Screen("inventory", "Cabinet")
     data object History : Screen("history", "History")
+    data object Stats : Screen("stats", "Stats")
     data object Profile : Screen("profile", "Profile")
 }
 
-val bottomNavScreens = listOf(Screen.Home, Screen.Medicines, Screen.History, Screen.Profile)
+val bottomNavScreens = listOf(Screen.Home, Screen.Inventory, Screen.History, Screen.Stats, Screen.Profile)

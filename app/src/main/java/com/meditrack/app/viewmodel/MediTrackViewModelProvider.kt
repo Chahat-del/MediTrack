@@ -21,6 +21,10 @@ class MediTrackViewModelProvider(
                 HistoryViewModel(repository) as T
             modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
                 SettingsViewModel(repository) as T
+            modelClass.isAssignableFrom(DisposalViewModel::class.java) ->
+                DisposalViewModel(repository) as T
+            modelClass.isAssignableFrom(StatsViewModel::class.java) ->
+                StatsViewModel(repository) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }

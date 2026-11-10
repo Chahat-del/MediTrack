@@ -18,6 +18,8 @@ data class HomeUiState(
     val displayName: String = "",
     val takenCount: Int = 0,
     val remainingCount: Int = 0,
+    val expiredCount: Int = 0,
+    val expiringSoonCount: Int = 0,
     val isLoading: Boolean = true
 )
 
@@ -34,17 +36,16 @@ class HomeViewModel(
 
     private fun loadData() {
         viewModelScope.launch {
-            // Combine medicines and today's doses into a single UI state
             combine(
                 repository.getAllMedicines(),
                 repository.getDosesForDate(DateTimeUtils.todayIso()),
-                repository.displayName
-            ) { medicines, doses, name ->
+                repository.displayName,
+                repository.expiryWarningDays
+            ) { medicines, doses, name, warningDays ->
+                val today = DateTimeUtils.todayIso()
                 val activeMedicines = medicines.filter { med ->
-                    med.endDate == null || med.endDate!! >= DateTimeUtils.todayIso()
+                    med.endDate == null || med.endDate >= today
                 }
-                // Build today's schedule: for each active medicine, for each reminder time,
-                // check if a dose was already recorded
                 val todaySchedule = activeMedicines.flatMap { med ->
                     med.reminderTimes.split(",").map { it.trim() }.filter { it.isNotEmpty() }
                         .map { time ->
@@ -57,14 +58,26 @@ class HomeViewModel(
                 val totalScheduled = todaySchedule.size
                 val remaining = totalScheduled - taken
 
+                // Expiry counts across all medicines
+                val expired = medicines.count { med ->
+                    med.expiryDate != null && med.expiryDate < today
+                }
+                val expiringSoon = medicines.count { med ->
+                    val exp = med.expiryDate ?: return@count false
+                    val days = DateTimeUtils.daysUntilExpiry(exp)
+                    days in 0..warningDays
+                }
+
                 HomeUiState(
                     greeting = DateTimeUtils.getGreeting(),
-                    todayDate = DateTimeUtils.formatDisplayDate(DateTimeUtils.todayIso()),
+                    todayDate = DateTimeUtils.formatDisplayDate(today),
                     medicines = activeMedicines,
                     todayDoses = doses,
                     displayName = name,
                     takenCount = taken,
                     remainingCount = remaining.coerceAtLeast(0),
+                    expiredCount = expired,
+                    expiringSoonCount = expiringSoon,
                     isLoading = false
                 )
             }.collect { state ->
@@ -77,10 +90,8 @@ class HomeViewModel(
     fun recordDose(medicine: MedicineEntity, time: String, status: String) {
         viewModelScope.launch {
             val date = DateTimeUtils.todayIso()
-            // Check if already recorded
             val existing = repository.getDose(medicine.id, time, date)
-            if (existing != null) return@launch // Already recorded, prevent duplicates
-
+            if (existing != null) return@launch
             repository.recordDose(
                 DoseEntity(
                     medicineId = medicine.id,
@@ -103,7 +114,10 @@ class HomeViewModel(
                     instructions = "After meals",
                     startDate = today,
                     endDate = null,
-                    reminderTimes = "08:00,20:00"
+                    reminderTimes = "08:00,20:00",
+                    expiryDate = DateTimeUtils.getNDaysFromNow(400),
+                    quantity = 24,
+                    medicineType = "Tablet"
                 ),
                 MedicineEntity(
                     name = "Vitamin D",
@@ -111,7 +125,10 @@ class HomeViewModel(
                     instructions = "With breakfast",
                     startDate = today,
                     endDate = null,
-                    reminderTimes = "09:00"
+                    reminderTimes = "09:00",
+                    expiryDate = DateTimeUtils.getNDaysFromNow(15),  // expiring soon
+                    quantity = 60,
+                    medicineType = "Tablet"
                 ),
                 MedicineEntity(
                     name = "Amoxicillin",
@@ -119,7 +136,10 @@ class HomeViewModel(
                     instructions = "Every 8 hours",
                     startDate = today,
                     endDate = null,
-                    reminderTimes = "08:00,16:00,00:00"
+                    reminderTimes = "08:00,16:00,00:00",
+                    expiryDate = DateTimeUtils.getNDaysFromNow(-10),  // already expired
+                    quantity = 10,
+                    medicineType = "Capsule"
                 )
             )
             for (med in samples) {

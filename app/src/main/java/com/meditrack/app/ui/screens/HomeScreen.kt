@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Medication
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -36,7 +37,6 @@ fun HomeScreen(
     onLoadDemoData: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -49,16 +49,21 @@ fun HomeScreen(
 
         // Greeting header
         Text(
-            text = state.greeting,
+            text = state.greeting + if (state.displayName.isNotBlank()) ", ${state.displayName}!" else "!",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = OnWhite
         )
-        Text(
-            text = state.todayDate,
-            fontSize = 14.sp,
-            color = MediumGray
-        )
+        Text(text = state.todayDate, fontSize = 14.sp, color = MediumGray)
+
+        // Expiry alerts banner
+        if (state.expiredCount > 0 || state.expiringSoonCount > 0) {
+            Spacer(modifier = Modifier.height(12.dp))
+            ExpiryAlertBanner(
+                expiredCount = state.expiredCount,
+                expiringSoonCount = state.expiringSoonCount
+            )
+        }
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -68,33 +73,18 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem(
-                    value = state.takenCount.toString(),
-                    label = "Taken Today",
-                    color = TakenGreen
-                )
+                StatItem(value = state.takenCount.toString(), label = "Taken Today", color = TakenGreen)
                 VerticalDivider()
-                StatItem(
-                    value = state.remainingCount.toString(),
-                    label = "Remaining",
-                    color = TealPrimary
-                )
+                StatItem(value = state.remainingCount.toString(), label = "Remaining", color = TealPrimary)
                 VerticalDivider()
-                StatItem(
-                    value = state.medicines.size.toString(),
-                    label = "Medicines",
-                    color = GreenSecondary
-                )
+                StatItem(value = state.medicines.size.toString(), label = "Medicines", color = GreenSecondary)
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
         // Quick actions
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(
                 onClick = onAddMedicine,
                 modifier = Modifier.weight(1f).height(48.dp),
@@ -119,13 +109,7 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Today's schedule
-        Text(
-            text = "Today's Schedule",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = OnWhite
-        )
-
+        Text(text = "Today's Schedule", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = OnWhite)
         Spacer(modifier = Modifier.height(12.dp))
 
         if (state.medicines.isEmpty()) {
@@ -135,16 +119,12 @@ fun HomeScreen(
                 message = "Add your first medicine to start tracking your doses.\nTap 'Add Medicine' above."
             )
             Spacer(modifier = Modifier.height(16.dp))
-            // Demo data button
             OutlinedButton(
                 onClick = onLoadDemoData,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Load Sample Data")
-            }
+            ) { Text("Load Sample Data") }
         } else {
-            // Build schedule list
             val todayDoses = state.todayDoses
             val scheduleItems = state.medicines.flatMap { med ->
                 med.reminderTimes.split(",").map { it.trim() }.filter { it.isNotEmpty() }
@@ -180,6 +160,27 @@ fun HomeScreen(
 }
 
 @Composable
+private fun ExpiryAlertBanner(expiredCount: Int, expiringSoonCount: Int) {
+    val message = buildString {
+        if (expiredCount > 0) append("⚠️ $expiredCount medicine(s) have expired. ")
+        if (expiringSoonCount > 0) append("⏰ $expiringSoonCount expiring soon.")
+    }
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = Color(0xFFFFF3E0)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Filled.Warning, contentDescription = null, tint = AmberWarning, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(message.trim(), fontSize = 13.sp, color = Color(0xFF7B4F00), fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
+@Composable
 private fun StatItem(value: String, label: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = color)
@@ -189,12 +190,7 @@ private fun StatItem(value: String, label: String, color: Color) {
 
 @Composable
 private fun VerticalDivider() {
-    Box(
-        modifier = Modifier
-            .width(1.dp)
-            .height(40.dp)
-            .background(Color(0xFFE0E0E0))
-    )
+    Box(modifier = Modifier.width(1.dp).height(40.dp).background(Color(0xFFE0E0E0)))
 }
 
 @Composable
@@ -209,15 +205,8 @@ private fun ScheduleItemCard(
     val isDone = status != null
 
     MediCard {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Time badge
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = Color(0xFFE0F2F1)
-            ) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFE0F2F1)) {
                 Text(
                     text = displayTime,
                     fontSize = 13.sp,
@@ -226,23 +215,11 @@ private fun ScheduleItemCard(
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
             }
-
             Spacer(modifier = Modifier.width(12.dp))
-
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = medicine.name,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = OnWhite
-                )
-                Text(
-                    text = medicine.dosage,
-                    fontSize = 13.sp,
-                    color = MediumGray
-                )
+                Text(text = medicine.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = OnWhite)
+                Text(text = medicine.dosage, fontSize = 13.sp, color = MediumGray)
             }
-
             if (isDone) {
                 DoseStatusChip(status!!)
             } else {
