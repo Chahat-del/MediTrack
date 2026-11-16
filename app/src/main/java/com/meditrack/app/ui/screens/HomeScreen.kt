@@ -10,7 +10,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material3.*

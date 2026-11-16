@@ -23,6 +23,7 @@ import com.meditrack.app.ui.components.MediCard
 import com.meditrack.app.ui.theme.*
 import com.meditrack.app.viewmodel.SettingsViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(viewModel: SettingsViewModel) {
     val displayName by viewModel.displayName.collectAsState()
