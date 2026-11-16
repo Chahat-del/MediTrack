@@ -259,16 +259,32 @@ private fun InventoryCard(
                 IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
                     Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = ErrorRed, modifier = Modifier.size(20.dp))
                 }
-                if (onDispose != null) {
-                    IconButton(onClick = onDispose, modifier = Modifier.size(32.dp)) {
-                        Icon(
-                            Icons.Outlined.CheckCircle,
-                            contentDescription = "Dispose",
-                            tint = AmberWarning,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
+            }
+        }
+
+        // Dispose button — full-width, clearly labelled, only for expired/expiring-soon
+        if (onDispose != null) {
+            Spacer(modifier = Modifier.height(10.dp))
+            HorizontalDivider(color = LightGray)
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onDispose,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (item.expiryStatus == ExpiryStatus.EXPIRED) ErrorRed else AmberWarning
+                )
+            ) {
+                Icon(Icons.Outlined.CheckCircle, null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (item.expiryStatus == ExpiryStatus.EXPIRED)
+                        "Dispose Now — Expired"
+                    else
+                        "Dispose — Expiring Soon",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }

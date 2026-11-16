@@ -96,7 +96,8 @@ fun MediTrackNavHost() {
                     onAddMedicine = { navController.navigate("add_medicine") },
                     onViewSchedule = { navController.navigate("medicines") },
                     onMarkDose = { med, time, status -> homeViewModel.recordDose(med, time, status) },
-                    onLoadDemoData = { homeViewModel.loadDemoData() }
+                    onLoadDemoData = { homeViewModel.loadDemoData() },
+                    onOpenDisposalGuide = { navController.navigate("disposal_guide") }
                 )
             }
 

@@ -107,44 +107,134 @@ class HomeViewModel(
     fun loadDemoData() {
         viewModelScope.launch {
             val today = DateTimeUtils.todayIso()
+
+            // 8 realistic medicines covering every expiry state and medicine type
             val samples = listOf(
+                // ── In-date medicines ─────────────────────────────────────────
                 MedicineEntity(
                     name = "Paracetamol",
-                    dosage = "500mg",
-                    instructions = "After meals",
+                    dosage = "500mg — 2 tablets",
+                    instructions = "Take after meals. Max 8 tablets in 24 hrs.",
+                    startDate = today,
+                    endDate = null,
+                    reminderTimes = "08:00,14:00,20:00",
+                    expiryDate = DateTimeUtils.getNDaysFromNow(420),
+                    quantity = 32,
+                    medicineType = "Tablet"
+                ),
+                MedicineEntity(
+                    name = "Salbutamol Inhaler",
+                    dosage = "100mcg — 2 puffs",
+                    instructions = "Use when breathless. Shake well before use.",
                     startDate = today,
                     endDate = null,
                     reminderTimes = "08:00,20:00",
-                    expiryDate = DateTimeUtils.getNDaysFromNow(400),
-                    quantity = 24,
-                    medicineType = "Tablet"
+                    expiryDate = DateTimeUtils.getNDaysFromNow(300),
+                    quantity = 1,
+                    medicineType = "Inhaler"
                 ),
                 MedicineEntity(
-                    name = "Vitamin D",
-                    dosage = "1 tablet",
-                    instructions = "With breakfast",
+                    name = "Omeprazole",
+                    dosage = "20mg — 1 capsule",
+                    instructions = "Take 30 mins before breakfast.",
+                    startDate = today,
+                    endDate = null,
+                    reminderTimes = "07:30",
+                    expiryDate = DateTimeUtils.getNDaysFromNow(180),
+                    quantity = 28,
+                    medicineType = "Capsule"
+                ),
+                MedicineEntity(
+                    name = "Lactulose Solution",
+                    dosage = "15ml",
+                    instructions = "With morning meal. Drink plenty of water.",
                     startDate = today,
                     endDate = null,
                     reminderTimes = "09:00",
-                    expiryDate = DateTimeUtils.getNDaysFromNow(15),  // expiring soon
-                    quantity = 60,
+                    expiryDate = DateTimeUtils.getNDaysFromNow(90),
+                    quantity = 300,
+                    medicineType = "Liquid"
+                ),
+                // ── Expiring soon (within 30 days) ────────────────────────────
+                MedicineEntity(
+                    name = "Vitamin D3",
+                    dosage = "1000 IU — 1 tablet",
+                    instructions = "Take with breakfast.",
+                    startDate = today,
+                    endDate = null,
+                    reminderTimes = "09:00",
+                    expiryDate = DateTimeUtils.getNDaysFromNow(18),
+                    quantity = 20,
                     medicineType = "Tablet"
                 ),
                 MedicineEntity(
-                    name = "Amoxicillin",
-                    dosage = "250mg",
-                    instructions = "Every 8 hours",
+                    name = "Hydrocortisone Cream 1%",
+                    dosage = "Thin layer",
+                    instructions = "Apply to affected area twice daily. Avoid face.",
                     startDate = today,
-                    endDate = null,
+                    endDate = DateTimeUtils.getNDaysFromNow(14),
+                    reminderTimes = "08:00,20:00",
+                    expiryDate = DateTimeUtils.getNDaysFromNow(22),
+                    quantity = 1,
+                    medicineType = "Cream/Ointment"
+                ),
+                // ── Expired ───────────────────────────────────────────────────
+                MedicineEntity(
+                    name = "Amoxicillin",
+                    dosage = "250mg — 1 capsule",
+                    instructions = "Complete full course. Every 8 hours with food.",
+                    startDate = DateTimeUtils.getNDaysFromNow(-45),
+                    endDate = DateTimeUtils.getNDaysFromNow(-38),
                     reminderTimes = "08:00,16:00,00:00",
-                    expiryDate = DateTimeUtils.getNDaysFromNow(-10),  // already expired
-                    quantity = 10,
+                    expiryDate = DateTimeUtils.getNDaysFromNow(-8),
+                    quantity = 6,
                     medicineType = "Capsule"
+                ),
+                MedicineEntity(
+                    name = "Ibuprofen",
+                    dosage = "400mg — 1 tablet",
+                    instructions = "With or after food. Do not exceed 3 tablets in 24 hrs.",
+                    startDate = DateTimeUtils.getNDaysFromNow(-120),
+                    endDate = null,
+                    reminderTimes = "08:00,20:00",
+                    expiryDate = DateTimeUtils.getNDaysFromNow(-30),
+                    quantity = 14,
+                    medicineType = "Tablet"
                 )
             )
+
+            // Insert all medicines and collect the assigned IDs
+            val insertedIds = mutableListOf<Long>()
             for (med in samples) {
-                repository.insertMedicine(med)
+                val id = repository.insertMedicine(med)
+                insertedIds.add(id)
             }
+
+            // Pre-record 2 disposal events (for the 2 expired medicines)
+            // Amoxicillin disposal — pharmacy drop-off 5 days ago
+            repository.recordDisposal(
+                com.meditrack.app.data.DisposalEntity(
+                    medicineId = insertedIds.getOrElse(6) { 0L },
+                    medicineName = "Amoxicillin (old course)",
+                    quantity = 10,
+                    unit = "Capsule",
+                    disposalMethod = "Pharmacy Drop-Off",
+                    disposedDate = DateTimeUtils.getNDaysFromNow(-5),
+                    timestamp = System.currentTimeMillis() - (5L * 24 * 60 * 60 * 1000)
+                )
+            )
+            // Ibuprofen partial disposal — at-home 12 days ago
+            repository.recordDisposal(
+                com.meditrack.app.data.DisposalEntity(
+                    medicineId = insertedIds.getOrElse(7) { 0L },
+                    medicineName = "Ibuprofen",
+                    quantity = 8,
+                    unit = "Tablet",
+                    disposalMethod = "At-Home Safe Disposal",
+                    disposedDate = DateTimeUtils.getNDaysFromNow(-12),
+                    timestamp = System.currentTimeMillis() - (12L * 24 * 60 * 60 * 1000)
+                )
+            )
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.meditrack.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Medication
@@ -18,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,7 +35,8 @@ fun HomeScreen(
     onAddMedicine: () -> Unit,
     onViewSchedule: () -> Unit,
     onMarkDose: (MedicineEntity, String, String) -> Unit,
-    onLoadDemoData: () -> Unit
+    onLoadDemoData: () -> Unit,
+    onOpenDisposalGuide: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -108,7 +110,44 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Today's schedule
+        // Disposal guide shortcut
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = Color(0xFFE0F2F1),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onOpenDisposalGuide() }
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("♻️", fontSize = 26.sp)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "Safe Medicine Disposal Guide",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TealDark
+                    )
+                    Text(
+                        "Learn how to safely dispose of expired medicines",
+                        fontSize = 12.sp,
+                        color = MediumGray
+                    )
+                }
+                Icon(
+                    Icons.Filled.ChevronRight,
+                    contentDescription = null,
+                    tint = TealPrimary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
         Text(text = "Today's Schedule", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = OnWhite)
         Spacer(modifier = Modifier.height(12.dp))
 
